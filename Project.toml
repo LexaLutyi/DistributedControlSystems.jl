@@ -3,6 +3,15 @@ uuid = "d14b68a6-6005-4866-9a10-8ceb977a395a"
 authors = ["Samarin Aleksei <liotbiu1@gmail.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+BlockArrays = "8e7c35d0-a365-5155-bbbb-fb81a777f24e"
+ControlSystems = "a6e380b2-a6ca-5380-bf3e-84a91bcd477e"
+IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+RobustAndOptimalControl = "21fd56a4-db03-40ee-82ee-a87907bee541"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+
 [compat]
 julia = "1"
 
