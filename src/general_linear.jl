@@ -7,7 +7,7 @@ yᵢ = Cᵢ x + ∑ Dᵢⱼ uⱼ
 
 Block matrices are used to store data  
 B = [B₁ B₂ … Bₙ]  
-C = [C₁; C₂; …; \Cₙ]
+C = [C₁; C₂; …; Cₙ]
 """
 struct StateSpaceDistributed{BM_A, BM_B, BM_C, BM_D}
     A::BM_A
@@ -148,7 +148,9 @@ perform k-th step of decentralized controller synthesis
 
 Ak is a closed loop matrix obtained on previous step
 """
-function local_controller_and_closed_sys(ssd, k, Ak)
+function local_controller_and_closed_sys(ssd, k, Ak;
+    alg=robust_controller
+)
     B = ssd.B[Block(k)]
     m = size(Ak, 1) - size(B, 1)
     Bk = [
@@ -160,7 +162,7 @@ function local_controller_and_closed_sys(ssd, k, Ak)
     Ck = [C zeros(size(C, 1), n)]
     
     sys = ss(Ak, Bk, Ck, 0)
-    local_controller = robust_controller(sys)
+    local_controller = alg(sys)
     closed_sys = feedback(sys, local_controller)
     local_controller, closed_sys
 end
@@ -171,14 +173,14 @@ end
 
 return vector of local controllers and final closed loop matrix A
 """
-function distributed_controllers(ssd)
+function distributed_controllers(ssd; alg=robust_controller)
     n = blocksize(ssd.B, 2)
-    controller, sys = local_controller_and_closed_sys(ssd, 1, ssd.A)
+    controller, sys = local_controller_and_closed_sys(ssd, 1, ssd.A; alg)
     Ak = sys.A
     controllers = [controller]
     
     for k in 2:n
-        controller, sys = local_controller_and_closed_sys(ssd, k, Ak)
+        controller, sys = local_controller_and_closed_sys(ssd, k, Ak; alg)
         Ak = sys.A
         push!(controllers, controller)
     end

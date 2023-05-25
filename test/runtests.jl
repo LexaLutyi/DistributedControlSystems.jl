@@ -1,6 +1,8 @@
 using DistributedControlSystems
 using Test
 using LinearAlgebra
+using ControlSystems
+using RobustAndOptimalControl
 
 @testset "StateSpaceDistributed" begin
     A = [
@@ -117,4 +119,85 @@ end
     @test size(controllers2[2].A) == (2, 2)
     @test all(e -> e < 0, A_closed_loop |> eigvals |> real)
     @test all(e -> e < 0, A_closed_loop2 |> eigvals |> real)
+end
+
+
+@testset "lmi siso" begin
+    a = [1;;]
+    b = [1;;]
+    f, gamma = lmi_h_inf(a, b)
+    @test f[1] > 0
+
+    a = [
+        0 1
+        0 0
+    ]
+    b = [
+        0; 1;;
+    ]
+    f, gamma = lmi_h_inf(a, b)
+    @test all(f .> 0)
+
+    a = diagm(10, 10, 1 => ones(9))
+    b = zeros(10, 1)
+    b[end] = 1
+    f, gamma = lmi_h_inf(a, b)
+    @test isstable(ss(a - b * f))
+end
+
+@testset "lmi mimo" begin
+    a = diagm(6, 6, 1 => ones(5))
+    a[3, 4] = 0
+    b = [
+        0 0
+        0 0
+        1 0
+        0 0
+        0 0
+        0 1
+    ]
+    f, gamma = lmi_h_inf(a, b)
+    @test isstable(ss(a - b * f))
+
+    a = [
+        0 1 0 0
+        0 0 0 0
+        0 0 0 1
+        0 0 0 0
+    ]
+    b = [
+        0 0
+        0 1
+        0 0
+        1 0
+    ]
+    T = [
+        1 0 -1 0
+        0 1 0 -1
+    ]
+    # z = T x => A = TAT⁺
+    A = T * a * pinv(T)
+    B = T * b
+    f, gamma = lmi_h_inf(A, B)
+    @test isstable(ss(A - B * f))
+end
+
+
+@testset "lmi static controller" begin
+    a = [
+        0 1
+        1 -1
+    ]
+    b = [
+        1
+        1
+    ]
+    c = [1 1]
+    system = ss(a, b, c, 0)
+    ess = ExtendedStateSpace(system)
+    f, gamma = lmi_static_h_inf(ess)
+    closed = feedback(ess, ss(f))
+    @test isstable(closed)
+    @test isapprox(hinfnorm2(closed)[1], gamma, atol=1e-2)
+    @test size(f) == (1, 1)
 end
